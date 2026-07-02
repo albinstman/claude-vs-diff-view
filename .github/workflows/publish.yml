@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # attach the vsix to the GitHub release
+      id-token: write # OIDC token for Entra ID (workload identity federation)
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +37,23 @@ jobs:
       - name: Package
         run: npx vsce package
 
-      - name: Publish to VS Code Marketplace
+      # Preferred: Entra ID via workload identity federation (no long-lived
+      # secrets; Azure DevOps global PATs retire 2026-12-01).
+      - name: Azure login (Entra ID)
+        if: vars.AZURE_CLIENT_ID != ''
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish to VS Code Marketplace (Entra ID)
+        if: vars.AZURE_CLIENT_ID != ''
+        run: npx vsce publish --packagePath *.vsix --azure-credential
+
+      # Fallback: classic PAT (works until the 2026-12-01 retirement).
+      - name: Publish to VS Code Marketplace (PAT)
+        if: vars.AZURE_CLIENT_ID == ''
         run: npx vsce publish --packagePath *.vsix -p "$VSCE_PAT"
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
