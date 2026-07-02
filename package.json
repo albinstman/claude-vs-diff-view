@@ -1,0 +1,456 @@
+{
+  "name": "claude-bridge",
+  "displayName": "Claude Bridge",
+  "description": "Live edit visibility for Claude Code: explorer follow, edit badges, native diffs, and transport controls (dwell/freeze/skip).",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.3.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "claudeBridge",
+          "title": "Claude Bridge",
+          "icon": "media/claude-bridge.svg"
+        }
+      ]
+    },
+    "views": {
+      "claudeBridge": [
+        {
+          "id": "claudeBridge.changes",
+          "name": "Claude Session Changes",
+          "icon": "media/claude-bridge.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "claudeBridge.resume",
+        "title": "Resume Claude",
+        "category": "Claude Bridge",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "claudeBridge.skip",
+        "title": "Skip to Next Edit",
+        "category": "Claude Bridge",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "claudeBridge.skipBurst",
+        "title": "Skip Burst (Run to Next File / Quiet)",
+        "category": "Claude Bridge",
+        "icon": "$(run-all)"
+      },
+      {
+        "command": "claudeBridge.freeze",
+        "title": "Freeze on This Diff",
+        "category": "Claude Bridge",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "claudeBridge.toggleFollow",
+        "title": "Toggle Explorer Follow",
+        "category": "Claude Bridge",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "claudeBridge.resetSession",
+        "title": "Reset Session State",
+        "category": "Claude Bridge",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "claudeBridge.quickSettings",
+        "title": "Quick Settings",
+        "category": "Claude Bridge",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "claudeBridge.openLastDiff",
+        "title": "Reopen Most Recent Diff",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.statusBarClick",
+        "title": "Status Bar Click (internal)",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.toggleGrouping",
+        "title": "Toggle Grouping (Directory / Recency)",
+        "category": "Claude Bridge",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "claudeBridge.openDiffForFile",
+        "title": "Open Claude Diff",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.tree.openFile",
+        "title": "Open File",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.tree.diffVsSessionStart",
+        "title": "Diff vs Session Start",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.tree.diffVsLastEdit",
+        "title": "Diff vs Last Edit",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.tree.clearEntry",
+        "title": "Clear Entry",
+        "category": "Claude Bridge"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "claudeBridge.resetSession",
+          "when": "view == claudeBridge.changes",
+          "group": "navigation@3"
+        },
+        {
+          "command": "claudeBridge.toggleFollow",
+          "when": "view == claudeBridge.changes",
+          "group": "navigation@2"
+        },
+        {
+          "command": "claudeBridge.toggleGrouping",
+          "when": "view == claudeBridge.changes",
+          "group": "navigation@1"
+        },
+        {
+          "command": "claudeBridge.quickSettings",
+          "when": "view == claudeBridge.changes",
+          "group": "navigation@4"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "claudeBridge.tree.openFile",
+          "when": "view == claudeBridge.changes && viewItem =~ /claudeBridgeFile/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "claudeBridge.tree.diffVsSessionStart",
+          "when": "view == claudeBridge.changes && viewItem == claudeBridgeFile.diffable",
+          "group": "1_open@2"
+        },
+        {
+          "command": "claudeBridge.tree.diffVsLastEdit",
+          "when": "view == claudeBridge.changes && viewItem == claudeBridgeFile.diffable",
+          "group": "1_open@3"
+        },
+        {
+          "command": "claudeBridge.tree.clearEntry",
+          "when": "view == claudeBridge.changes && viewItem =~ /claudeBridgeFile/",
+          "group": "9_manage@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claudeBridge.statusBarClick",
+          "when": "false"
+        },
+        {
+          "command": "claudeBridge.openDiffForFile",
+          "when": "false"
+        },
+        {
+          "command": "claudeBridge.tree.openFile",
+          "when": "false"
+        },
+        {
+          "command": "claudeBridge.tree.diffVsSessionStart",
+          "when": "false"
+        },
+        {
+          "command": "claudeBridge.tree.diffVsLastEdit",
+          "when": "false"
+        },
+        {
+          "command": "claudeBridge.tree.clearEntry",
+          "when": "false"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "claudeBridge.resume",
+        "key": "enter",
+        "when": "claudeBridge.holding && !inputFocus"
+      },
+      {
+        "command": "claudeBridge.skip",
+        "key": "ctrl+alt+enter",
+        "when": "claudeBridge.holding"
+      },
+      {
+        "command": "claudeBridge.skipBurst",
+        "key": "shift+enter",
+        "when": "claudeBridge.holding && !inputFocus"
+      },
+      {
+        "command": "claudeBridge.freeze",
+        "key": "space",
+        "when": "claudeBridge.holding && !claudeBridge.frozen && !inputFocus"
+      }
+    ],
+    "colors": [
+      {
+        "id": "claudeBridge.activeEditColor",
+        "description": "Color for files Claude is actively editing right now.",
+        "defaults": {
+          "dark": "#E06C75",
+          "light": "#C0392B",
+          "highContrast": "#FF8A8A",
+          "highContrastLight": "#B30000"
+        }
+      },
+      {
+        "id": "claudeBridge.lingeringEditColor",
+        "description": "Color for files Claude edited a moment ago (linger phase).",
+        "defaults": {
+          "dark": "#D19A66",
+          "light": "#B05A2A",
+          "highContrast": "#FFC08A",
+          "highContrastLight": "#8A4500"
+        }
+      },
+      {
+        "id": "claudeBridge.touchedColor",
+        "description": "Muted color for files Claude has touched this session.",
+        "defaults": {
+          "dark": "#B5985A",
+          "light": "#8A6D2F",
+          "highContrast": "#D7BA7D",
+          "highContrastLight": "#6A5320"
+        }
+      },
+      {
+        "id": "claudeBridge.externalChangeColor",
+        "description": "Color for files changed outside Edit tools (e.g. via Bash) during a Claude session.",
+        "defaults": {
+          "dark": "#7FB4CA",
+          "light": "#2E6E8E",
+          "highContrast": "#9CDCFE",
+          "highContrastLight": "#1A5276"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Claude Bridge",
+      "properties": {
+        "claudeBridge.port": {
+          "type": "number",
+          "default": 38217,
+          "description": "Localhost port for the hook HTTP bridge. Changing this restarts the server. If busy, the bridge probes up to port+10."
+        },
+        "claudeBridge.follow.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reveal and select files in the Explorer as Claude edits them."
+        },
+        "claudeBridge.follow.debounceMs": {
+          "type": "number",
+          "default": 500,
+          "description": "Minimum interval between Explorer reveals."
+        },
+        "claudeBridge.follow.userActivityGraceMs": {
+          "type": "number",
+          "default": 2000,
+          "description": "Skip Explorer reveals if you interacted with the editor/Explorer within this many milliseconds (best-effort anti-fight heuristic)."
+        },
+        "claudeBridge.diff.open": {
+          "type": "string",
+          "enum": ["always", "firstEditPerFile", "never"],
+          "default": "always",
+          "description": "When to open a native diff for a Claude edit."
+        },
+        "claudeBridge.diff.baseline": {
+          "type": "string",
+          "enum": ["lastEdit", "sessionStart"],
+          "default": "lastEdit",
+          "description": "Diff baseline: snapshot taken just before this edit, or the first snapshot of the session."
+        },
+        "claudeBridge.diff.preview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open diffs as preview tabs (reused, italic title)."
+        },
+        "claudeBridge.diff.preserveFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open diffs without stealing focus (keeps focus in the terminal)."
+        },
+        "claudeBridge.diff.maxOpenDiffs": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum number of bridge-opened diff tabs kept open; oldest are closed. 0 = unlimited."
+        },
+        "claudeBridge.diff.closeOnRelease": {
+          "type": "boolean",
+          "default": false,
+          "description": "Close the diff tab when the hold is released."
+        },
+        "claudeBridge.hold.dwellMs": {
+          "type": "number",
+          "default": 0,
+          "description": "How long to hold Claude after each edit while you look at the diff. 0 = never hold, -1 = hold until manual resume (subject to hook-timeout safety release)."
+        },
+        "claudeBridge.hold.onlyFirstEditPerFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Only hold on the first edit to each file."
+        },
+        "claudeBridge.hold.minChangedLines": {
+          "type": "number",
+          "default": 0,
+          "description": "Only hold if the edit changed at least this many lines. 0 = no minimum."
+        },
+        "claudeBridge.hold.onlyWhenFocused": {
+          "type": "boolean",
+          "default": true,
+          "description": "Only hold when the VS Code window is focused."
+        },
+        "claudeBridge.hold.include": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "If non-empty, only hold for files matching one of these globs."
+        },
+        "claudeBridge.hold.exclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [
+            "**/package-lock.json",
+            "**/yarn.lock",
+            "**/pnpm-lock.yaml",
+            "**/Cargo.lock",
+            "**/*.lock",
+            "**/*.min.*",
+            "**/dist/**",
+            "**/build/**",
+            "**/out/**",
+            "**/*.ipynb"
+          ],
+          "description": "Never hold for files matching these globs."
+        },
+        "claudeBridge.hold.burstQuietMs": {
+          "type": "number",
+          "default": 4000,
+          "description": "After Skip Burst, suppress holds until this long passes with no edit events."
+        },
+        "claudeBridge.hold.burstScope": {
+          "type": "string",
+          "enum": ["file", "time"],
+          "default": "file",
+          "description": "Skip Burst ends when an edit targets a different file ('file') or only after the quiet period ('time')."
+        },
+        "claudeBridge.hold.hookTimeoutSeconds": {
+          "type": "number",
+          "default": 600,
+          "description": "Must mirror the 'timeout' in your Claude Code hooks config. Used to auto-release holds safely before Claude Code gives up."
+        },
+        "claudeBridge.hold.timeoutSafetyMs": {
+          "type": "number",
+          "default": 5000,
+          "description": "Auto-release holds this many milliseconds before the hook timeout."
+        },
+        "claudeBridge.decorations.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show badges/colors on files Claude touches (Explorer, tabs, quick open)."
+        },
+        "claudeBridge.decorations.lingerMs": {
+          "type": "number",
+          "default": 2500,
+          "description": "How long a file keeps the 'just edited' highlight after an edit."
+        },
+        "claudeBridge.decorations.propagateToFolders": {
+          "type": "boolean",
+          "default": true,
+          "description": "Propagate decorations to parent folders."
+        },
+        "claudeBridge.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Claude Bridge status bar items."
+        },
+        "claudeBridge.tree.grouping": {
+          "type": "string",
+          "enum": ["directory", "recency"],
+          "default": "directory",
+          "description": "Group session changes by directory, or list flat by recency."
+        },
+        "claudeBridge.watcher.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Watch the workspace for changes made outside Edit tools (e.g. via Bash) during a Claude session."
+        },
+        "claudeBridge.watcher.exclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/out/**",
+            "**/.venv/**",
+            "**/__pycache__/**",
+            "**/.next/**",
+            "**/target/**"
+          ],
+          "description": "Globs the fallback watcher ignores (merged with files.exclude)."
+        },
+        "claudeBridge.watcher.sessionActiveWindowMs": {
+          "type": "number",
+          "default": 600000,
+          "description": "A Claude session is presumed active for this long after the last hook event; watcher changes outside an active session are ignored."
+        },
+        "claudeBridge.snapshots.maxTotalMB": {
+          "type": "number",
+          "default": 200,
+          "description": "Cap on in-memory snapshot bytes; oldest snapshots spill to disk beyond this."
+        },
+        "claudeBridge.snapshots.maxFileMB": {
+          "type": "number",
+          "default": 5,
+          "description": "Files larger than this are not snapshotted (no diff for them)."
+        }
+      }
+    }
+  }
+}
