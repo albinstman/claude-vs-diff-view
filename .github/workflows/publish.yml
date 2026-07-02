@@ -9,6 +9,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Federated credential binds to this environment (OIDC subjects have no
+    # wildcards, so tag refs can't be matched directly).
+    environment: marketplace
     permissions:
       contents: write # attach the vsix to the GitHub release
       id-token: write # OIDC token for Entra ID (workload identity federation)
