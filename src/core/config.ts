@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 export type DiffOpenMode = 'always' | 'firstEditPerFile' | 'never';
 export type DiffBaseline = 'lastEdit' | 'sessionStart';
 export type BurstScope = 'file' | 'time';
-export type TreeGrouping = 'directory' | 'recency';
 
 /**
  * Typed accessor for all claudeBridge.* settings. Values are read live so
@@ -38,7 +37,7 @@ export class Config implements vscode.Disposable {
     return this.cfg.get<number>('follow.debounceMs', 500);
   }
   get followUserActivityGraceMs(): number {
-    return this.cfg.get<number>('follow.userActivityGraceMs', 2000);
+    return this.cfg.get<number>('follow.userActivityGraceMs', 0);
   }
 
   get diffOpen(): DiffOpenMode {
@@ -61,7 +60,7 @@ export class Config implements vscode.Disposable {
   }
 
   get holdDwellMs(): number {
-    return this.cfg.get<number>('hold.dwellMs', 0);
+    return this.cfg.get<number>('hold.dwellMs', 3000);
   }
   get holdOnlyFirstEditPerFile(): boolean {
     return this.cfg.get<boolean>('hold.onlyFirstEditPerFile', false);
@@ -91,22 +90,8 @@ export class Config implements vscode.Disposable {
     return this.cfg.get<number>('hold.timeoutSafetyMs', 5000);
   }
 
-  get decorationsEnabled(): boolean {
-    return this.cfg.get<boolean>('decorations.enabled', true);
-  }
-  get decorationsLingerMs(): number {
-    return this.cfg.get<number>('decorations.lingerMs', 2500);
-  }
-  get decorationsPropagateToFolders(): boolean {
-    return this.cfg.get<boolean>('decorations.propagateToFolders', true);
-  }
-
   get statusBarEnabled(): boolean {
     return this.cfg.get<boolean>('statusBar.enabled', true);
-  }
-
-  get treeGrouping(): TreeGrouping {
-    return this.cfg.get<TreeGrouping>('tree.grouping', 'directory');
   }
 
   get watcherEnabled(): boolean {

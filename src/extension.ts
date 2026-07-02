@@ -7,8 +7,6 @@ import { FsWatcherFallback } from './bridge/fsWatcher';
 import { SnapshotProvider, SNAPSHOT_SCHEME } from './diff/snapshotProvider';
 import { DiffController } from './diff/diffController';
 import { ExplorerFollower } from './ui/explorerFollower';
-import { DecorationProvider } from './ui/decorations';
-import { ChangesTree } from './ui/changesTree';
 import { StatusBarUi } from './ui/statusBar';
 import { showQuickSettings } from './ui/quickSettings';
 
@@ -26,8 +24,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   const snapshotProvider = new SnapshotProvider(store);
   const diffController = new DiffController(bus, config, store, log);
   const follower = new ExplorerFollower(bus, config, diffController, log);
-  const decorations = new DecorationProvider(config, store);
-  const tree = new ChangesTree(config, store, () => follower.noteUserActivity());
   const statusBar = new StatusBarUi(config, bus, diffController, bridge, store);
   const watcher = new FsWatcherFallback(bus, config, store, log);
 
@@ -39,8 +35,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     snapshotProvider,
     diffController,
     follower,
-    decorations,
-    tree,
     statusBar,
     watcher,
     vscode.workspace.registerTextDocumentContentProvider(SNAPSHOT_SCHEME, snapshotProvider)
@@ -55,11 +49,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   cmd('claudeBridge.skipBurst', () => diffController.skipBurst());
   cmd('claudeBridge.freeze', () => diffController.freezeCurrent());
   cmd('claudeBridge.toggleFollow', () => follower.toggle());
-  cmd('claudeBridge.resetSession', async () => {
-    await store.resetSession();
-    decorations.refreshAll();
-    tree.refresh();
-  });
+  cmd('claudeBridge.resetSession', () => store.resetSession());
   cmd('claudeBridge.quickSettings', () => showQuickSettings(config));
   cmd('claudeBridge.openLastDiff', () => diffController.openLastDiff());
   cmd('claudeBridge.statusBarClick', () => {
@@ -69,38 +59,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       void showQuickSettings(config);
     }
   });
-  cmd('claudeBridge.toggleGrouping', () => tree.toggleGrouping());
-  cmd('claudeBridge.openDiffForFile', (arg) => {
-    const filePath = typeof arg === 'string' ? arg : nodePath(arg);
-    if (filePath) {
-      void diffController.openDiffForFile(filePath);
-    }
-  });
-  cmd('claudeBridge.tree.openFile', (node) => {
-    const filePath = nodePath(node);
-    if (filePath) {
-      void vscode.window.showTextDocument(vscode.Uri.file(filePath), { preview: true });
-    }
-  });
-  cmd('claudeBridge.tree.diffVsSessionStart', (node) => {
-    const filePath = nodePath(node);
-    if (filePath) {
-      void diffController.openDiffForFile(filePath, 'sessionStart');
-    }
-  });
-  cmd('claudeBridge.tree.diffVsLastEdit', (node) => {
-    const filePath = nodePath(node);
-    if (filePath) {
-      void diffController.openDiffForFile(filePath, 'lastEdit');
-    }
-  });
-  cmd('claudeBridge.tree.clearEntry', (node) => {
-    const filePath = nodePath(node);
-    if (filePath) {
-      store.clearEntry(filePath);
-    }
-  });
-
   // ── config reactions ─────────────────────────────────────────────────────
   context.subscriptions.push(
     config.onDidChange((e) => {
@@ -109,15 +67,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         bridge.queueRestart();
       }
       if (
-        e.affectsConfiguration('claudeBridge.decorations') ||
         e.affectsConfiguration('claudeBridge.statusBar') ||
         e.affectsConfiguration('claudeBridge.follow.enabled')
       ) {
-        decorations.refreshAll();
         statusBar.render();
-      }
-      if (e.affectsConfiguration('claudeBridge.tree.grouping')) {
-        tree.refresh();
       }
     })
   );
@@ -134,21 +87,4 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 export function deactivate(): void {
   // Pending holds are released by HttpBridge.dispose(); Claude Code fails
   // open on its own hook timeout if the extension host dies uncleanly.
-}
-
-/** Extract the file path from a tree node / uri / string command argument. */
-function nodePath(arg: unknown): string | undefined {
-  if (typeof arg === 'string') {
-    return arg;
-  }
-  if (arg && typeof arg === 'object') {
-    const maybe = arg as { record?: { filePath?: string }; fsPath?: string };
-    if (maybe.record?.filePath) {
-      return maybe.record.filePath;
-    }
-    if (typeof maybe.fsPath === 'string') {
-      return maybe.fsPath;
-    }
-  }
-  return undefined;
 }

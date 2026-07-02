@@ -8,7 +8,6 @@ import {
 } from './events';
 import { Config } from './config';
 
-export type FileState = 'active' | 'lingering' | 'touched';
 export type SnapshotSkipReason = 'tooLarge' | 'binary';
 
 export interface SnapshotEntry {
@@ -24,7 +23,6 @@ export interface SnapshotEntry {
 export interface FileRecord {
   filePath: string;
   uri: vscode.Uri;
-  state: FileState;
   editCount: number;
   externalChangeCount: number;
   firstEventAt: number;
@@ -52,7 +50,6 @@ const PENDING_DISCARD_MS = 60_000;
 export class SessionStore implements vscode.Disposable {
   private readonly files = new Map<string, FileRecord>();
   private readonly disposables: vscode.Disposable[] = [];
-  private readonly lingerTimers = new Map<string, NodeJS.Timeout>();
   private readonly pendingTimers = new Map<string, NodeJS.Timeout>();
   private totalSnapshotBytes = 0;
   private spillDir: vscode.Uri;
@@ -179,13 +176,11 @@ export class SessionStore implements vscode.Disposable {
 
   private handleEditStarted(e: EditStartedEvent): void {
     const record = this.ensureRecord(e.filePath);
-    record.state = 'active';
     record.lastToolName = e.toolName;
     record.sessionId = e.sessionId ?? record.sessionId;
     record.pendingSince = e.timestamp;
     record.deleted = false;
     this.noteHookEvent(e.filePath);
-    this.clearLingerTimer(e.filePath);
 
     // A Pre without a matching Post within 60s → discard pending state.
     this.clearPendingTimer(e.filePath);
@@ -196,7 +191,6 @@ export class SessionStore implements vscode.Disposable {
           `[store] PreToolUse for ${e.filePath} never completed within ${PENDING_DISCARD_MS}ms — discarding pending state`
         );
         r.pendingSince = undefined;
-        r.state = r.editCount > 0 ? 'touched' : r.state;
         if (r.editCount === 0 && r.snapshots.length > 0) {
           // Drop the orphan snapshot so baselines stay meaningful.
           const orphan = r.snapshots.pop()!;
@@ -225,18 +219,6 @@ export class SessionStore implements vscode.Disposable {
     }
     this.noteHookEvent(e.filePath);
     this.clearPendingTimer(e.filePath);
-
-    record.state = 'lingering';
-    this.clearLingerTimer(e.filePath);
-    const timer = setTimeout(() => {
-      const r = this.files.get(e.filePath);
-      if (r && r.state === 'lingering') {
-        r.state = 'touched';
-        this.fireChanged([r.uri]);
-      }
-      this.lingerTimers.delete(e.filePath);
-    }, Math.max(0, this.config.decorationsLingerMs));
-    this.lingerTimers.set(e.filePath, timer);
 
     this.fireChanged([record.uri]);
   }
@@ -267,7 +249,6 @@ export class SessionStore implements vscode.Disposable {
       }
     }
     this.files.delete(filePath);
-    this.clearLingerTimer(filePath);
     this.clearPendingTimer(filePath);
     this.fireChanged([record.uri]);
   }
@@ -277,10 +258,6 @@ export class SessionStore implements vscode.Disposable {
     this.files.clear();
     this.recentHookEvents.clear();
     this.totalSnapshotBytes = 0;
-    for (const t of this.lingerTimers.values()) {
-      clearTimeout(t);
-    }
-    this.lingerTimers.clear();
     for (const t of this.pendingTimers.values()) {
       clearTimeout(t);
     }
@@ -303,7 +280,6 @@ export class SessionStore implements vscode.Disposable {
       record = {
         filePath,
         uri: vscode.Uri.file(filePath),
-        state: 'touched',
         editCount: 0,
         externalChangeCount: 0,
         firstEventAt: Date.now(),
@@ -361,14 +337,6 @@ export class SessionStore implements vscode.Disposable {
     }
   }
 
-  private clearLingerTimer(filePath: string): void {
-    const t = this.lingerTimers.get(filePath);
-    if (t) {
-      clearTimeout(t);
-      this.lingerTimers.delete(filePath);
-    }
-  }
-
   private clearPendingTimer(filePath: string): void {
     const t = this.pendingTimers.get(filePath);
     if (t) {
@@ -384,9 +352,6 @@ export class SessionStore implements vscode.Disposable {
   dispose(): void {
     for (const d of this.disposables) {
       d.dispose();
-    }
-    for (const t of this.lingerTimers.values()) {
-      clearTimeout(t);
     }
     for (const t of this.pendingTimers.values()) {
       clearTimeout(t);

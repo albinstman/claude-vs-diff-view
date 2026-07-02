@@ -4,3 +4,9 @@ tsconfig.json
 esbuild.mjs
 dist/**/*.map
 .gitignore
+.vscode/**
+.devcontainer/**
+.claude/**
+demo/**
+claude-bridge-implementation-plan.md
+*.vsix

@@ -3,18 +3,22 @@
 Follow Claude Code's work **while it happens** instead of reviewing at the end:
 
 - **Explorer follow (default on):** every file Claude edits is revealed and
-  selected in the Explorer as it's touched.
-- **Persistent marks:** files get `✻` badges and colors while being edited,
-  then an edit-count badge for the rest of the session (Explorer, tabs, quick
-  open). Changes made via Bash (`sed -i`, …) get a `◦` badge via a watcher
-  fallback.
+  selected in the Explorer as it's touched — the moving selection *is* the
+  "Claude is here" marker. The extension adds no Explorer decorations of its
+  own; git's colors/badges (green for new, orange for modified) stay
+  authoritative.
+- **Status bar activity:** a spinner (`editing greeter.py`) while an edit is
+  in flight, a brief `✻ edited …` afterward.
 - **Native diffs:** each edit opens a VS Code diff of the pre-edit snapshot vs
   the current file.
-- **Transport controls:** optionally hold Claude after each edit for a dwell
-  time with a status-bar countdown — resume (⏎), freeze (space), or skip a
-  burst (shift+⏎).
-- **Session tree:** a `✻` Activity Bar view lists everything Claude changed,
-  grouped by directory or by recency, with `+added −deleted` counts.
+- **Transport controls:** each edit holds Claude for 3s by default while the
+  diff is up, with a status-bar countdown — resume (⏎), freeze (space), or
+  skip a burst (shift+⏎). Diffs stay open after release until newer ones push
+  them past `diff.maxOpenDiffs`. Set `hold.dwellMs: 0` for no holding.
+
+There is deliberately no extra Explorer decoration or activity-bar view: the
+regular Explorer (selection + git badges) is the UI, plus the status bar and
+the diffs themselves.
 
 Architecture: Claude Code `PreToolUse`/`PostToolUse` HTTP hooks POST to a
 localhost server inside this extension; the PostToolUse response is the hold
@@ -54,14 +58,14 @@ Then install the Claude Code hooks — see
 | `port` | `38217` | bridge port (restarts server on change; probes +10 if busy) |
 | `follow.enabled` | `true` | reveal+select files in the Explorer as Claude edits |
 | `follow.debounceMs` | `500` | max one reveal per this interval |
-| `follow.userActivityGraceMs` | `2000` | skip reveals right after you interacted with the UI (best-effort) |
+| `follow.userActivityGraceMs` | `0` | skip reveals right after you interacted with the UI (0 = always reveal) |
 | `diff.open` | `always` | `always` \| `firstEditPerFile` \| `never` |
 | `diff.baseline` | `lastEdit` | left side: snapshot before this edit, or `sessionStart` |
 | `diff.preview` | `true` | open diffs as preview tabs |
 | `diff.preserveFocus` | `true` | don't steal focus from the terminal |
 | `diff.maxOpenDiffs` | `3` | close oldest bridge-owned diff tabs beyond this (0 = unlimited) |
-| `diff.closeOnRelease` | `false` | close the diff when the hold releases |
-| `hold.dwellMs` | `0` | `0` never hold · `>0` hold that long · `-1` hold until manual resume |
+| `diff.closeOnRelease` | `false` | close the diff when the hold releases (off: diffs stay until pushed out by `maxOpenDiffs`) |
+| `hold.dwellMs` | `3000` | `0` never hold · `>0` hold that long · `-1` hold until manual resume |
 | `hold.onlyFirstEditPerFile` | `false` | hold only on a file's first edit |
 | `hold.minChangedLines` | `0` | hold only if the edit changed ≥ N lines |
 | `hold.onlyWhenFocused` | `true` | hold only while the VS Code window is focused |
@@ -70,11 +74,7 @@ Then install the Claude Code hooks — see
 | `hold.burstScope` | `file` | burst ends on a different file (`file`) or only on quiet (`time`) |
 | `hold.hookTimeoutSeconds` | `600` | must mirror the hooks config `timeout` |
 | `hold.timeoutSafetyMs` | `5000` | auto-release holds this early before the hook timeout |
-| `decorations.enabled` | `true` | badges/colors on touched files |
-| `decorations.lingerMs` | `2500` | how long the "just edited" highlight lasts |
-| `decorations.propagateToFolders` | `true` | parent folders show activity |
 | `statusBar.enabled` | `true` | show the status bar items |
-| `tree.grouping` | `directory` | tree view grouping (`directory` \| `recency`) |
 | `watcher.enabled` | `true` | fallback watcher for Bash-made changes |
 | `watcher.exclude` | node_modules, .git, … | globs the watcher ignores (merged with `files.exclude`) |
 | `watcher.sessionActiveWindowMs` | `600000` | how long a session counts as active after the last hook event |
@@ -83,21 +83,20 @@ Then install the Claude Code hooks — see
 
 Everything hot-reloads except `port` (which restarts the bridge server).
 
-Theme colors (override in `workbench.colorCustomizations`):
-`claudeBridge.activeEditColor`, `claudeBridge.lingeringEditColor`,
-`claudeBridge.touchedColor`, `claudeBridge.externalChangeColor`.
-
 ## Behavior notes & limitations (v1)
 
 - **View-only.** No accept/reject — rejecting edits stays Claude Code's job.
+- **No Explorer decorations or side views.** By design the extension leaves
+  file badges and colors to git; live activity shows as Explorer selection
+  (follow) and the status bar spinner. Changes made via Bash are tracked
+  internally (watcher) but have no UI beyond the status bar file count.
 - **New files:** created files diff against an empty left side and are revealed
   after PostToolUse (they don't exist before it).
 - **MultiEdit** = one snapshot pair, one diff, one hold.
 - **Parallel subagents:** interleaved Pre/Post events are held per-request; a
   Pre without its Post for 60s is discarded.
-- **Files outside the workspace** are tracked in the tree with absolute paths;
-  Explorer reveal is skipped for them.
-- **Deleted files** keep a `(deleted)` tree entry until you clear them.
+- **Files outside the workspace** still get diffs and holds; Explorer reveal
+  is skipped for them.
 - **`.ipynb`** files are snapshotted as raw JSON; diffs are noisy, so they're
   in the default `hold.exclude`.
 - **Extension reload mid-hold:** the pending hook request dies and Claude Code

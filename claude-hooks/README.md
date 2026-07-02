@@ -46,8 +46,8 @@ just lose visibility until the bridge is back.
 
 Hooks are configured only for `Edit|Write|MultiEdit|NotebookEdit`. Do not add
 Bash/Read hooks for the bridge — file changes made via Bash (e.g. `sed -i`)
-are picked up by the extension's filesystem watcher fallback instead (badge
-`◦`, no diff/hold).
+are picked up by the extension's filesystem watcher fallback instead (no
+diff/hold — there's no pre-image).
 
 > Note: the bridge has **no authentication** — it trusts anything that can
 > reach `127.0.0.1:38217` in the environment it runs in. This is intended for

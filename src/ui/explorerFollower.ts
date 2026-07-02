@@ -49,11 +49,6 @@ export class ExplorerFollower implements vscode.Disposable {
     );
   }
 
-  /** Called by the tree view so selecting tree items counts as user activity. */
-  noteUserActivity(): void {
-    this.lastUserActivityAt = Date.now();
-  }
-
   private isBridgeCaused(uri: vscode.Uri): boolean {
     if (uri.scheme === SNAPSHOT_SCHEME) {
       return true;

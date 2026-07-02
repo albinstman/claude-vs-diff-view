@@ -9,6 +9,8 @@ import { SessionStore } from '../core/sessionStore';
 /** Show a countdown in the status bar when this close to the safety release. */
 const SAFETY_COUNTDOWN_WINDOW_MS = 30_000;
 const ACTIVE_EDIT_FLASH_MS = 2000;
+/** Matches SessionStore's pending-Pre discard window. */
+const STALE_IN_FLIGHT_MS = 60_000;
 
 /**
  * Primary status bar item (idle / editing / dwelling / frozen) plus a
@@ -21,6 +23,8 @@ export class StatusBarUi implements vscode.Disposable {
   private tick?: NodeJS.Timeout;
   private lastEditedFile?: string;
   private lastEditAt = 0;
+  /** Edits whose PreToolUse arrived but whose PostToolUse hasn't (spinner state). */
+  private readonly inFlight = new Map<string, number>();
 
   constructor(
     private readonly config: Config,
@@ -43,15 +47,22 @@ export class StatusBarUi implements vscode.Disposable {
       bridge.onDidChangeState(() => this.render()),
       config.onDidChange(() => this.render()),
       bus.onEditStarted((e) => {
+        this.inFlight.set(e.filePath, e.timestamp);
+        // Backstop for a Pre whose Post never arrives (discarded after 60s).
+        setTimeout(() => {
+          if (this.inFlight.get(e.filePath) === e.timestamp) {
+            this.inFlight.delete(e.filePath);
+            this.render();
+          }
+        }, STALE_IN_FLIGHT_MS);
+        this.render();
+      }),
+      bus.onEditCompleted((e) => {
+        this.inFlight.delete(e.filePath);
         this.lastEditedFile = e.filePath;
         this.lastEditAt = e.timestamp;
         this.render();
         setTimeout(() => this.render(), ACTIVE_EDIT_FLASH_MS + 50);
-      }),
-      bus.onEditCompleted((e) => {
-        this.lastEditedFile = e.filePath;
-        this.lastEditAt = e.timestamp;
-        this.render();
       })
     );
     this.render();
@@ -89,8 +100,11 @@ export class StatusBarUi implements vscode.Disposable {
       this.main.backgroundColor = undefined;
       this.stopTicking();
       const now = Date.now();
-      if (this.lastEditedFile && now - this.lastEditAt < ACTIVE_EDIT_FLASH_MS) {
-        this.main.text = `✻ editing ${path.basename(this.lastEditedFile)}`;
+      const editing = [...this.inFlight.entries()].sort((a, b) => b[1] - a[1])[0];
+      if (editing) {
+        this.main.text = `$(loading~spin) editing ${path.basename(editing[0])}`;
+      } else if (this.lastEditedFile && now - this.lastEditAt < ACTIVE_EDIT_FLASH_MS) {
+        this.main.text = `✻ edited ${path.basename(this.lastEditedFile)}`;
       } else {
         this.main.text = '✻ Claude Bridge';
       }
