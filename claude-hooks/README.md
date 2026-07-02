@@ -6,13 +6,20 @@ Claude Bridge VS Code extension. Verified against Claude Code **2.1.198**
 
 ## Install
 
+**Preferred:** run **Claude Bridge: Install Claude Code Hooks** from the VS
+Code command palette — it merges the block below into `~/.claude/settings.json`
+(all projects) or the current project's `.claude/settings.json`, idempotently
+and using your configured port. The manual steps below are the same thing by
+hand:
+
 1. **Merge the hooks block** from `settings-snippet.json` into your Claude
    Code settings:
-   - per project: `<repo>/.claude/settings.json` (or `settings.local.json`)
-   - or globally: `~/.claude/settings.json`
+   - globally (recommended): `~/.claude/settings.json`
+   - or per project: `<repo>/.claude/settings.json` (or `settings.local.json`)
 
    If you already have `PreToolUse`/`PostToolUse` entries, append the objects
-   from the snippet to your existing arrays.
+   from the snippet to your existing arrays. Install at ONE level only —
+   user-level and project-level hooks both fire, doubling every event.
 
 2. **Check the port.** The extension listens on `127.0.0.1:38217` by default
    (`claudeBridge.port`). If that port is busy it probes up to `+10` and shows

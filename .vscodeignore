@@ -1,5 +1,6 @@
 src/**
 node_modules/**
+.github/**
 tsconfig.json
 esbuild.mjs
 dist/**/*.map

@@ -1,16 +1,27 @@
 {
   "name": "claude-bridge",
   "displayName": "Claude Bridge",
-  "description": "Live edit visibility for Claude Code: explorer follow, edit badges, native diffs, and transport controls (dwell/freeze/skip).",
+  "description": "Live edit visibility for Claude Code: explorer follow, native diffs per edit, and transport controls (dwell/freeze/skip).",
   "version": "0.1.0",
-  "publisher": "local",
+  "publisher": "Albinstman",
   "license": "MIT",
-  "private": true,
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/albinstman/claude-vs-diff-view.git"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "diff",
+    "agent"
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
@@ -20,7 +31,7 @@
     "build": "node esbuild.mjs",
     "typecheck": "tsc --noEmit",
     "vscode:prepublish": "npm run build",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
@@ -76,6 +87,11 @@
       {
         "command": "claudeBridge.openLastDiff",
         "title": "Reopen Most Recent Diff",
+        "category": "Claude Bridge"
+      },
+      {
+        "command": "claudeBridge.installHooks",
+        "title": "Install Claude Code Hooks",
         "category": "Claude Bridge"
       },
       {

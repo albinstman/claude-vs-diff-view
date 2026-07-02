@@ -9,6 +9,7 @@ import { DiffController } from './diff/diffController';
 import { ExplorerFollower } from './ui/explorerFollower';
 import { StatusBarUi } from './ui/statusBar';
 import { showQuickSettings } from './ui/quickSettings';
+import { installHooksCommand, scheduleFirstRunNudge } from './core/hooksInstaller';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const log = vscode.window.createOutputChannel('Claude Bridge');
@@ -52,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   cmd('claudeBridge.resetSession', () => store.resetSession());
   cmd('claudeBridge.quickSettings', () => showQuickSettings(config));
   cmd('claudeBridge.openLastDiff', () => diffController.openLastDiff());
+  cmd('claudeBridge.installHooks', () => installHooksCommand(config, log));
   cmd('claudeBridge.statusBarClick', () => {
     if (diffController.holding) {
       diffController.releaseCurrent('status bar click');
@@ -81,6 +83,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   await bridge.start();
   statusBar.render();
+  scheduleFirstRunNudge(context, config, log, () => bridge.lastEventAt > 0);
   log.appendLine('[extension] activated');
 }
 

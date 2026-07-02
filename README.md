@@ -24,20 +24,34 @@ Architecture: Claude Code `PreToolUse`/`PostToolUse` HTTP hooks POST to a
 localhost server inside this extension; the PostToolUse response is the hold
 point. See `claude-hooks/README.md`.
 
-## Install
+## Install (once per machine — new projects need nothing)
 
-```bash
-npm install
-npm run build
-npx vsce package --allow-missing-repository   # produces claude-bridge-0.1.0.vsix
-code --install-extension claude-bridge-0.1.0.vsix
+1. Install **Claude Bridge** from the VS Code Marketplace
+   (`Albinstman.claude-bridge`).
+2. Run **Claude Bridge: Install Claude Code Hooks** from the command palette
+   and pick **User settings** — this merges the hooks into
+   `~/.claude/settings.json`, so they apply to *every* project. (If you skip
+   this, the extension notices the missing hooks and offers to install them.)
+3. Start a Claude Code session and ask it to edit something.
+
+That's the whole setup. The hooks fail open, so projects/machines without the
+extension running are completely unaffected. For devcontainers, add the
+extension ID to `devcontainer.json` so each container comes up ready:
+
+```jsonc
+"customizations": { "vscode": { "extensions": ["Albinstman.claude-bridge"] } }
 ```
 
-Then install the Claude Code hooks — see
-`claude-hooks/README.md`. Quick version:
+Manual/offline install from source:
 
-1. Merge `claude-hooks/settings-snippet.json` into `.claude/settings.json`.
-2. Start a Claude Code session and ask it to edit something.
+```bash
+npm install && npm run build && npx vsce package
+code --install-extension claude-bridge-*.vsix
+```
+
+The hooks JSON is documented in `claude-hooks/README.md` if you prefer to
+merge it by hand (project-level `.claude/settings.json` works too — just don't
+install both levels, or every edit fires twice).
 
 ## Everyday controls
 
@@ -112,3 +126,16 @@ Everything hot-reloads except `port` (which restarts the bridge server).
   environment can post events. Intended for sandboxed/devcontainer setups
   where the container is the security boundary. Request bodies (which contain
   file contents) are never logged.
+
+## Releasing (maintainers)
+
+Publishing is automated via `.github/workflows/publish.yml`:
+
+1. One-time: create an Azure DevOps Personal Access Token for the
+   `Albinstman` publisher (dev.azure.com → User settings → Personal Access
+   Tokens → organization "All accessible organizations", scope **Marketplace →
+   Manage**) and add it as the `VSCE_PAT` repository secret.
+2. Per release: bump `version` in `package.json`, commit, then
+   `git tag v<version> && git push --tags`. CI typechecks, packages, publishes
+   to the Marketplace, and attaches the `.vsix` to a GitHub release. The
+   workflow fails fast if the tag and `package.json` version disagree.
