@@ -2,15 +2,15 @@ name: Release vsix
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # attach the vsix to the GitHub release
+      contents: write # create the tag + release with the vsix
     steps:
       - uses: actions/checkout@v4
 
@@ -23,27 +23,27 @@ jobs:
 
       - run: npm run typecheck
 
-      - name: Check tag matches package.json version
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Check whether this version is already released
+        id: version
         run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "package.json version ($PKG_VERSION) != tag ($TAG_VERSION)" >&2
-            exit 1
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "v$VERSION already released — skipping"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Package
-        run: npx vsce package
-
-      - name: Create GitHub release with vsix
-        if: startsWith(github.ref, 'refs/tags/')
-        run: gh release create "$GITHUB_REF_NAME" *.vsix --title "$GITHUB_REF_NAME" --generate-notes || gh release upload "$GITHUB_REF_NAME" *.vsix
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Upload vsix as workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: vsix
-          path: '*.vsix'
+      - name: Package
+        if: steps.version.outputs.released == 'false'
+        run: npx vsce package
+
+      - name: Create release v${{ steps.version.outputs.version }}
+        if: steps.version.outputs.released == 'false'
+        run: gh release create "v$VERSION" *.vsix --title "v$VERSION" --generate-notes --target "$GITHUB_SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}

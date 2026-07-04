@@ -129,13 +129,14 @@ Everything hot-reloads except `port` (which restarts the bridge server).
 
 ## Releasing (maintainers)
 
-Marketplace uploads are manual by choice; CI only builds the artifact:
+Marketplace uploads are manual by choice; `package.json` is the single source
+of truth for versions:
 
-1. Bump `version` in `package.json`, commit, then
-   `git tag v<version> && git push --tags`.
-2. `.github/workflows/publish.yml` typechecks, packages, and creates a GitHub
-   release with the `.vsix` attached (it fails fast if the tag and
-   `package.json` version disagree).
+1. Bump `version` in `package.json`, commit, push to `main`.
+2. `.github/workflows/publish.yml` sees the not-yet-released version and
+   creates tag `v<version>` plus a GitHub release with the `.vsix` attached.
+   Pushes that don't change the version just run the typecheck.
 3. Download the `.vsix` from the release and upload it at
    https://marketplace.visualstudio.com/manage/publishers/albinstman
-   (… menu on the extension → Update).
+   (… menu on the extension → Update) — keeping the marketplace version
+   identical to `package.json`.
