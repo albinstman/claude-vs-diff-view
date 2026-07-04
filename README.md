@@ -129,26 +129,13 @@ Everything hot-reloads except `port` (which restarts the bridge server).
 
 ## Releasing (maintainers)
 
-Publishing is automated via `.github/workflows/publish.yml`. Per release: bump
-`version` in `package.json`, commit, then `git tag v<version> && git push
---tags`. CI typechecks, packages, publishes to the Marketplace, and attaches
-the `.vsix` to a GitHub release. The workflow fails fast if the tag and
-`package.json` version disagree.
+Marketplace uploads are manual by choice; CI only builds the artifact:
 
-Authentication (one-time setup, workflow supports both):
-
-- **Entra ID / workload identity federation — preferred.** Azure DevOps
-  global PATs retire on 2026-12-01. Setup: create a Microsoft Entra
-  app registration (or user-assigned managed identity), add a **federated
-  credential** trusting this repo's GitHub Actions OIDC
-  (issuer `https://token.actions.githubusercontent.com`, subject
-  `repo:albinstman/claude-vs-diff-view:ref:refs/tags/v*` or `:ref:refs/heads/main`),
-  then add that identity as a **member of the `Albinstman` publisher** with
-  the Contributor role (marketplace.visualstudio.com → Manage publisher →
-  Members). Finally set repo **variables** `AZURE_CLIENT_ID`,
-  `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`. The workflow then uses
-  `azure/login` + `vsce publish --azure-credential`.
-- **Classic PAT — fallback until 2026-12-01.** dev.azure.com → User settings →
-  Personal Access Tokens → organization "All accessible organizations", scope
-  **Marketplace → Manage**; store as the `VSCE_PAT` repository secret. Used
-  automatically when `AZURE_CLIENT_ID` is not configured.
+1. Bump `version` in `package.json`, commit, then
+   `git tag v<version> && git push --tags`.
+2. `.github/workflows/publish.yml` typechecks, packages, and creates a GitHub
+   release with the `.vsix` attached (it fails fast if the tag and
+   `package.json` version disagree).
+3. Download the `.vsix` from the release and upload it at
+   https://marketplace.visualstudio.com/manage/publishers/albinstman
+   (… menu on the extension → Update).
