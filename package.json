@@ -1,8 +1,8 @@
 {
   "name": "claude-bridge",
-  "displayName": "Claude Bridge",
+  "displayName": "Claude Live Diff",
   "description": "Live edit visibility for Claude Code: explorer follow, native diffs per edit, and transport controls (dwell/freeze/skip).",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "Albinstman",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -45,59 +45,59 @@
       {
         "command": "claudeBridge.resume",
         "title": "Resume Claude",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(debug-continue)"
       },
       {
         "command": "claudeBridge.skip",
         "title": "Skip to Next Edit",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(debug-step-over)"
       },
       {
         "command": "claudeBridge.skipBurst",
         "title": "Skip Burst (Run to Next File / Quiet)",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(run-all)"
       },
       {
         "command": "claudeBridge.freeze",
         "title": "Freeze on This Diff",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(debug-pause)"
       },
       {
         "command": "claudeBridge.toggleFollow",
         "title": "Toggle Explorer Follow",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(eye)"
       },
       {
         "command": "claudeBridge.resetSession",
         "title": "Reset Session State",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(clear-all)"
       },
       {
         "command": "claudeBridge.quickSettings",
         "title": "Quick Settings",
-        "category": "Claude Bridge",
+        "category": "Claude Live Diff",
         "icon": "$(gear)"
       },
       {
         "command": "claudeBridge.openLastDiff",
         "title": "Reopen Most Recent Diff",
-        "category": "Claude Bridge"
+        "category": "Claude Live Diff"
       },
       {
         "command": "claudeBridge.installHooks",
         "title": "Install Claude Code Hooks",
-        "category": "Claude Bridge"
+        "category": "Claude Live Diff"
       },
       {
         "command": "claudeBridge.statusBarClick",
         "title": "Status Bar Click (internal)",
-        "category": "Claude Bridge"
+        "category": "Claude Live Diff"
       }
     ],
     "menus": {
@@ -131,7 +131,7 @@
       }
     ],
     "configuration": {
-      "title": "Claude Bridge",
+      "title": "Claude Live Diff",
       "properties": {
         "claudeBridge.port": {
           "type": "number",
@@ -252,7 +252,7 @@
         "claudeBridge.statusBar.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Show the Claude Bridge status bar items."
+          "description": "Show the Claude Live Diff status bar items."
         },
         "claudeBridge.watcher.enabled": {
           "type": "boolean",

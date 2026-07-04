@@ -59,7 +59,7 @@ export async function showQuickSettings(config: Config): Promise<void> {
       },
     },
     {
-      label: '$(settings-gear) Open all Claude Bridge settings',
+      label: '$(settings-gear) Open all Claude Live Diff settings',
       description: '',
       action: async () => {
         await vscode.commands.executeCommand('workbench.action.openSettings', 'claudeBridge');
@@ -68,7 +68,7 @@ export async function showQuickSettings(config: Config): Promise<void> {
   ];
 
   const picked = await vscode.window.showQuickPick(items, {
-    title: 'Claude Bridge — Quick Settings',
+    title: 'Claude Live Diff — Quick Settings',
     placeHolder: 'Tune the live-follow workflow',
   });
   if (picked) {

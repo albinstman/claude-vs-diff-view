@@ -1,12 +1,12 @@
-# Claude Code hooks for Claude Bridge
+# Claude Code hooks for Claude Live Diff
 
 This folder contains the hooks block that connects the Claude Code CLI to the
-Claude Bridge VS Code extension. Verified against Claude Code **2.1.198**
+Claude Live Diff VS Code extension. Verified against Claude Code **2.1.198**
 (HTTP hooks: `type: "http"` with `url` and `timeout` in **seconds**).
 
 ## Install
 
-**Preferred:** run **Claude Bridge: Install Claude Code Hooks** from the VS
+**Preferred:** run **Claude Live Diff: Install Claude Code Hooks** from the VS
 Code command palette — it merges the block below into `~/.claude/settings.json`
 (all projects) or the current project's `.claude/settings.json`, idempotently
 and using your configured port. The manual steps below are the same thing by

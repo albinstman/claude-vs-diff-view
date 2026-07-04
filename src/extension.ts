@@ -12,7 +12,7 @@ import { showQuickSettings } from './ui/quickSettings';
 import { installHooksCommand, scheduleFirstRunNudge } from './core/hooksInstaller';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const log = vscode.window.createOutputChannel('Claude Bridge');
+  const log = vscode.window.createOutputChannel('Claude Live Diff');
   context.subscriptions.push(log);
   log.appendLine('[extension] activating');
 

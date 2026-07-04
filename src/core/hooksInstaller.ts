@@ -122,7 +122,7 @@ async function writeSettings(uri: vscode.Uri, settings: ClaudeSettings): Promise
   );
 }
 
-/** The "Claude Bridge: Install Claude Code Hooks" command. */
+/** The "Claude Live Diff: Install Claude Code Hooks" command. */
 export async function installHooksCommand(config: Config, log: vscode.OutputChannel): Promise<void> {
   const project = projectSettingsUri();
   const picked = await vscode.window.showQuickPick(
@@ -142,7 +142,7 @@ export async function installHooksCommand(config: Config, log: vscode.OutputChan
           ]
         : []),
     ],
-    { title: 'Install Claude Code hooks for Claude Bridge', placeHolder: 'Where should the hooks live?' }
+    { title: 'Install Claude Code hooks for Claude Live Diff', placeHolder: 'Where should the hooks live?' }
   );
   if (!picked) {
     return;
@@ -151,12 +151,12 @@ export async function installHooksCommand(config: Config, log: vscode.OutputChan
     const result = await installHooks(picked.target, config, log);
     const message =
       result === 'unchanged'
-        ? 'Claude Bridge hooks were already installed and up to date.'
-        : `Claude Bridge hooks ${result} in ${picked.target.fsPath}. Restart any running claude session to pick them up.`;
+        ? 'Claude Live Diff hooks were already installed and up to date.'
+        : `Claude Live Diff hooks ${result} in ${picked.target.fsPath}. Restart any running claude session to pick them up.`;
     void vscode.window.showInformationMessage(message);
   } catch (err) {
     void vscode.window.showErrorMessage(
-      `Claude Bridge: could not update ${picked.target.fsPath}: ${String(err)}. The file was left untouched.`
+      `Claude Live Diff: could not update ${picked.target.fsPath}: ${String(err)}. The file was left untouched.`
     );
   }
 }
@@ -192,7 +192,7 @@ export function scheduleFirstRunNudge(
       return;
     }
     const choice = await vscode.window.showInformationMessage(
-      'Claude Bridge is running, but no Claude Code hooks are installed — edits will not be visible. Install them now?',
+      'Claude Live Diff is running, but no Claude Code hooks are installed — edits will not be visible. Install them now?',
       'Install Hooks…',
       "Don't Ask Again"
     );

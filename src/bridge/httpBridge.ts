@@ -108,7 +108,7 @@ export class HttpBridge implements vscode.Disposable {
             `[bridge] port ${basePort} busy — listening on ${candidate} instead`
           );
           void vscode.window.showWarningMessage(
-            `Claude Bridge: port ${basePort} was busy; listening on ${candidate}. Update your hooks URL or free the port.`
+            `Claude Live Diff: port ${basePort} was busy; listening on ${candidate}. Update your hooks URL or free the port.`
           );
         } else {
           this.log.appendLine(`[bridge] listening on 127.0.0.1:${candidate}`);
@@ -124,7 +124,7 @@ export class HttpBridge implements vscode.Disposable {
     }
     this.lastError = `all ports ${basePort}–${basePort + PORT_PROBE_RANGE} busy`;
     this.log.appendLine(`[bridge] ERROR: ${this.lastError}`);
-    void vscode.window.showErrorMessage(`Claude Bridge: ${this.lastError}`);
+    void vscode.window.showErrorMessage(`Claude Live Diff: ${this.lastError}`);
     this._onDidChangeState.fire();
   }
 

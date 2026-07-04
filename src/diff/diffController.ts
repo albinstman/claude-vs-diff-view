@@ -314,7 +314,7 @@ export class DiffController implements vscode.Disposable {
     const record = this.store.getRecord(filePath);
     if (!snapshot || record?.snapshotSkippedReason) {
       void vscode.window.showInformationMessage(
-        `Claude Bridge: no diff available for ${path.basename(filePath)}${
+        `Claude Live Diff: no diff available for ${path.basename(filePath)}${
           record?.snapshotSkippedReason ? ` (${record.snapshotSkippedReason})` : ''
         }`
       );
@@ -325,7 +325,7 @@ export class DiffController implements vscode.Disposable {
 
   async openLastDiff(): Promise<void> {
     if (!this.lastDiff) {
-      void vscode.window.showInformationMessage('Claude Bridge: no diff opened yet this session.');
+      void vscode.window.showInformationMessage('Claude Live Diff: no diff opened yet this session.');
       return;
     }
     await this.openDiff(this.lastDiff.filePath, this.lastDiff.snapshot, this.lastDiff.baseline);

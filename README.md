@@ -1,4 +1,4 @@
-# Claude Bridge — live edit visibility for Claude Code in VS Code
+# Claude Live Diff — live edit visibility for Claude Code in VS Code
 
 Follow Claude Code's work **while it happens** instead of reviewing at the end:
 
@@ -26,9 +26,9 @@ point. See `claude-hooks/README.md`.
 
 ## Install (once per machine — new projects need nothing)
 
-1. Install **Claude Bridge** from the VS Code Marketplace
+1. Install **Claude Live Diff** from the VS Code Marketplace
    (`Albinstman.claude-bridge`).
-2. Run **Claude Bridge: Install Claude Code Hooks** from the command palette
+2. Run **Claude Live Diff: Install Claude Code Hooks** from the command palette
    and pick **User settings** — this merges the hooks into
    `~/.claude/settings.json`, so they apply to *every* project. (If you skip
    this, the extension notices the missing hooks and offers to install them.)
@@ -57,7 +57,7 @@ install both levels, or every edit fires twice).
 
 | Surface | What it does |
 |---|---|
-| `✻ Claude Bridge` status item | idle: click for quick settings; holding: click to resume |
+| `✻ Claude Live Diff` status item | idle: click for quick settings; holding: click to resume |
 | `✻ Follow: on/off` status item | toggle Explorer follow |
 | `⏎` (Enter) | resume Claude (while holding, when no input is focused) |
 | `space` | freeze on the current diff (until you resume) |

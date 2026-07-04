@@ -34,10 +34,10 @@ export class StatusBarUi implements vscode.Disposable {
     private readonly store: SessionStore
   ) {
     this.main = vscode.window.createStatusBarItem('claudeBridge.main', vscode.StatusBarAlignment.Left, 100);
-    this.main.name = 'Claude Bridge';
+    this.main.name = 'Claude Live Diff';
     this.main.command = 'claudeBridge.statusBarClick';
     this.follow = vscode.window.createStatusBarItem('claudeBridge.follow', vscode.StatusBarAlignment.Left, 99);
-    this.follow.name = 'Claude Bridge: Follow';
+    this.follow.name = 'Claude Live Diff: Follow';
     this.follow.command = 'claudeBridge.toggleFollow';
 
     this.disposables.push(
@@ -106,7 +106,7 @@ export class StatusBarUi implements vscode.Disposable {
       } else if (this.lastEditedFile && now - this.lastEditAt < ACTIVE_EDIT_FLASH_MS) {
         this.main.text = `✻ edited ${path.basename(this.lastEditedFile)}`;
       } else {
-        this.main.text = '✻ Claude Bridge';
+        this.main.text = '✻ Claude Live Diff';
       }
       this.main.tooltip = this.idleTooltip();
     }
@@ -119,7 +119,7 @@ export class StatusBarUi implements vscode.Disposable {
 
   private idleTooltip(): vscode.MarkdownString {
     const md = new vscode.MarkdownString();
-    md.appendMarkdown('**Claude Bridge**\n\n');
+    md.appendMarkdown('**Claude Live Diff**\n\n');
     md.appendMarkdown(
       this.bridge.running
         ? `Listening on \`127.0.0.1:${this.bridge.port}\`\n\n`
